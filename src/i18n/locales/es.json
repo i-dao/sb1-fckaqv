@@ -1,0 +1,25 @@
+{
+  "menu": {
+    "dashboard": "Panel Principal",
+    "wallet": "Billetera",
+    "ibot": "Bot de Trading",
+    "imoney": "Banca",
+    "itax": "Centro Fiscal",
+    "ibusiness": "Negocios",
+    "affiliate": "Afiliados",
+    "profile": "Perfil",
+    "dao": "DAO",
+    "support": "Soporte"
+  },
+  "common": {
+    "send": "Enviar",
+    "receive": "Recibir",
+    "swap": "Intercambiar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "logout": "Cerrar Sesión",
+    "submit": "Enviar",
+    "continue": "Continuar",
+    "back": "Volver"
+  }
+}

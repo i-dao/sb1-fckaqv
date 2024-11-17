@@ -1,0 +1,25 @@
+{
+  "menu": {
+    "dashboard": "Overview",
+    "wallet": "My Wallet",
+    "ibot": "i-Bot Trading",
+    "imoney": "Banking",
+    "itax": "Tax Center",
+    "ibusiness": "Business Hub",
+    "affiliate": "Affiliate",
+    "profile": "My Profile",
+    "dao": "DAO",
+    "support": "Support"
+  },
+  "common": {
+    "send": "Send",
+    "receive": "Receive",
+    "swap": "Swap",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "logout": "Sign Out",
+    "submit": "Submit",
+    "continue": "Continue",
+    "back": "Back"
+  }
+}

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I-wallet.io - Technical Specifications</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #1a365d; }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        pre {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .important {
+            background: #fee2e2;
+            border-left: 4px solid #b91c1c;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .note {
+            background: #e0f2fe;
+            border-left: 4px solid #0369a1;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>I-wallet.io - Technical Specifications</h1>
+    <p><strong>Version:</strong> 1.3.0</p>
+    <p><strong>Last Updated:</strong> March 2024</p>
+
+    <div class="section">
+        <h2>1. Server Requirements</h2>
+        <h3>1.1 Hardware Specifications</h3>
+        <ul>
+            <li>CPU: 16+ cores, 3.0+ GHz</li>
+            <li>RAM: 64GB minimum</li>
+            <li>Storage: 1TB+ NVMe SSD</li>
+            <li>Network: 10Gbps dedicated connection</li>
+            <li>Backup Storage: 2TB+ with RAID configuration</li>
+        </ul>
+
+        <h3>1.2 Software Requirements</h3>
+        <ul>
+            <li>OS: Ubuntu 22.04 LTS</li>
+            <li>Node.js: v18+ LTS</li>
+            <li>PostgreSQL: 14+</li>
+            <li>Redis: 6+</li>
+            <li>Docker: Latest stable</li>
+            <li>Nginx: Latest stable</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>2. Security Measures</h2>
+        <h3>2.1 Infrastructure Security</h3>
+        <ul>
+            <li>DDoS Protection
+                <ul>
+                    <li>Cloudflare Enterprise</li>
+                    <li>AWS Shield Advanced</li>
+                    <li>Rate limiting at application and network levels</li>
+                </ul>
+            </li>
+            <li>Firewall Configuration
+                <ul>
+                    <li>AWS WAF with custom rules</li>
+                    <li>IP whitelisting for admin access</li>
+                    <li>Geo-blocking for high-risk regions</li>
+                </ul>
+            </li>
+            <li>Network Security
+                <ul>
+                    <li>VPC with private subnets</li>
+                    <li>VPN for admin access</li>
+                    <li>Network segmentation</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>2.2 Application Security</h3>
+        <ul>
+            <li>Authentication
+                <ul>
+                    <li>JWT with short expiration (15 minutes)</li>
+                    <li>Refresh token rotation</li>
+                    <li>2FA using TOTP</li>
+                </ul>
+            </li>
+            <li>Data Protection
+                <ul>
+                    <li>AES-256 encryption for sensitive data</li>
+                    <li>TLS 1.3 for all connections</li>
+                    <li>Data masking for logs</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>3. Database Structure</h2>
+        <pre><code>-- Users and Authentication
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    two_factor_secret VARCHAR(32),
+    two_factor_enabled BOOLEAN DEFAULT FALSE,
+    invitation_code VARCHAR(50) UNIQUE,
+    invites_remaining INTEGER DEFAULT 100,
+    affiliate_id UUID REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Wallets
+CREATE TABLE wallets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id),
+    currency VARCHAR(10) NOT NULL,
+    balance DECIMAL(36,18) DEFAULT 0,
+    address VARCHAR(42),
+    type VARCHAR(20),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Transactions
+CREATE TABLE transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    wallet_id UUID REFERENCES wallets(id),
+    type VARCHAR(20) NOT NULL,
+    amount DECIMAL(36,18) NOT NULL,
+    fee DECIMAL(36,18),
+    status VARCHAR(20) NOT NULL,
+    tx_hash VARCHAR(66),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Affiliate Earnings
+CREATE TABLE affiliate_earnings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id),
+    amount DECIMAL(36,18) NOT NULL,
+    credz_reward DECIMAL(36,18) NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    level INTEGER NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trading Bots
+CREATE TABLE trading_bots (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id),
+    exchange VARCHAR(50) NOT NULL,
+    api_key VARCHAR(255) NOT NULL,
+    api_secret VARCHAR(255) NOT NULL,
+    strategy VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bot Trades
+CREATE TABLE bot_trades (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bot_id UUID REFERENCES trading_bots(id),
+    pair VARCHAR(20) NOT NULL,
+    type VARCHAR(10) NOT NULL,
+    entry_price DECIMAL(36,18) NOT NULL,
+    exit_price DECIMAL(36,18),
+    amount DECIMAL(36,18) NOT NULL,
+    profit_loss DECIMAL(36,18),
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Smart Contract Security</h2>
+        <h3>4.1 Security Measures</h3>
+        <ul>
+            <li>Access Control
+                <ul>
+                    <li>Role-based access control (RBAC)</li>
+                    <li>Time-locked admin functions</li>
+                    <li>Multi-signature requirements for critical functions</li>
+                </ul>
+            </li>
+            <li>Transaction Security
+                <ul>
+                    <li>Rate limiting</li>
+                    <li>Maximum transaction limits</li>
+                    <li>Blacklist functionality</li>
+                </ul>
+            </li>
+            <li>Contract Upgrades
+                <ul>
+                    <li>Proxy pattern implementation</li>
+                    <li>Timelock for upgrades</li>
+                    <li>Emergency pause functionality</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>4.2 Smart Contract Code</h3>
+        <pre><code>// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
+contract CredzToken is ERC20, ReentrancyGuard, Pausable, AccessControl {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**18;
+    uint256 public constant INITIAL_SUPPLY = 100_000_000 * 10**18;
+
+    // Security features
+    uint256 public constant MAX_TRANSACTION_AMOUNT = 10_000_000 * 10**18;
+    mapping(address => uint256) public lastTransactionTimestamp;
+    uint256 public constant TRANSACTION_TIMELOCK = 1 hours;
+    
+    // Security mappings
+    mapping(address => bool) public blacklisted;
+    mapping(address => uint256) public dailyTransactionVolume;
+    mapping(address => uint256) public lastDailyVolumeReset;
+
+    constructor() ERC20("CREDZ", "CREDZ") {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(MINTER_ROLE, msg.sender);
+        _setupRole(BURNER_ROLE, msg.sender);
+        _setupRole(ADMIN_ROLE, msg.sender);
+        _mint(msg.sender, INITIAL_SUPPLY);
+    }
+
+    // Security modifiers
+    modifier notBlacklisted(address account) {
+        require(!blacklisted[account], "Account is blacklisted");
+        _;
+    }
+
+    modifier withinTransactionLimit(uint256 amount) {
+        require(amount &lt;= MAX_TRANSACTION_AMOUNT, "Amount exceeds transaction limit");
+        require(
+            block.timestamp >= lastTransactionTimestamp[msg.sender] + TRANSACTION_TIMELOCK,
+            "Transaction timelock active"
+        );
+        _;
+    }
+
+    // Transfer function with security checks
+    function transfer(address to, uint256 amount) 
+        public 
+        override 
+        notBlacklisted(msg.sender) 
+        notBlacklisted(to) 
+        withinTransactionLimit(amount) 
+        returns (bool) 
+    {
+        lastTransactionTimestamp[msg.sender] = block.timestamp;
+        return super.transfer(to, amount);
+    }
+
+    // Admin functions
+    function blacklistAccount(address account, bool status) 
+        external 
+        onlyRole(ADMIN_ROLE) 
+    {
+        blacklisted[account] = status;
+        emit BlacklistUpdated(account, status);
+    }
+
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(ADMIN_ROLE) {
+        _unpause();
+    }
+}</code></pre>
+    </div>
+</body>
+</html>

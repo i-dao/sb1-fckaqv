@@ -1,0 +1,25 @@
+{
+  "menu": {
+    "dashboard": "Översikt",
+    "wallet": "Plånbok",
+    "ibot": "Handelsbot",
+    "imoney": "Bank",
+    "itax": "Skattehantering",
+    "ibusiness": "Företag",
+    "affiliate": "Partner",
+    "profile": "Profil",
+    "dao": "DAO",
+    "support": "Support"
+  },
+  "common": {
+    "send": "Skicka",
+    "receive": "Ta Emot",
+    "swap": "Växla",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "logout": "Logga Ut",
+    "submit": "Skicka",
+    "continue": "Fortsätt",
+    "back": "Tillbaka"
+  }
+}
